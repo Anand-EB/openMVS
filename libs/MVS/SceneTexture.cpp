@@ -2045,14 +2045,14 @@ void MeshTexture::GenerateTexture(bool bGlobalSeamLeveling, bool bLocalSeamLevel
 		if (bGlobalSeamLeveling) {
 			TD_TIMER_STARTD();
 			GlobalSeamLeveling();
-			DEBUG_ULTIMATE("\tglobal seam leveling completed (%s)", TD_TIMER_GET_FMT().c_str());
+			DEBUG_EXTRA("\tglobal seam leveling completed (%s)", TD_TIMER_GET_FMT().c_str());
 		}
 
 		// perform local seam leveling
 		if (bLocalSeamLeveling) {
 			TD_TIMER_STARTD();
 			LocalSeamLeveling();
-			DEBUG_ULTIMATE("\tlocal seam leveling completed (%s)", TD_TIMER_GET_FMT().c_str());
+			DEBUG_EXTRA("\tlocal seam leveling completed (%s)", TD_TIMER_GET_FMT().c_str());
 		}
 	}
 
