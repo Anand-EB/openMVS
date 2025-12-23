@@ -2057,6 +2057,48 @@ void MeshTexture::GenerateTexture(bool bGlobalSeamLeveling, bool bLocalSeamLevel
 	}
 
 	// merge texture patches with overlapping rectangles
+	if (texturePatches.size() > 1) {
+		std::vector<uint32_t> sortedIndices(texturePatches.size() - 1);
+		std::iota(sortedIndices.begin(), sortedIndices.end(), 0);
+		// sort by label and area
+		std::sort(sortedIndices.begin(), sortedIndices.end(), [&](uint32_t a, uint32_t b) {
+			const TexturePatch& pA = texturePatches[a];
+			const TexturePatch& pB = texturePatches[b];
+			if (pA.label != pB.label)
+				return pA.label < pB.label;
+			return (uint64_t)pA.rect.width * pA.rect.height > (uint64_t)pB.rect.width * pB.rect.height;
+		});
+		for (size_t i = 0; i < sortedIndices.size(); ++i) {
+			const uint32_t idxBig = sortedIndices[i];
+			TexturePatch& patchBig = texturePatches[idxBig];
+			if (patchBig.label == NO_ID)
+				continue;
+			for (size_t j = i + 1; j < sortedIndices.size(); ++j) {
+				const uint32_t idxSmall = sortedIndices[j];
+				TexturePatch& patchSmall = texturePatches[idxSmall];
+				if (patchBig.label != patchSmall.label)
+					break;
+				if (patchSmall.label == NO_ID)
+					continue;
+				if (RectsBinPack::IsContainedIn(patchSmall.rect, patchBig.rect)) {
+					const TexCoord offset(patchSmall.rect.tl() - patchBig.rect.tl());
+					for (const FIndex idxFace : patchSmall.faces) {
+						TexCoord* texcoords = faceTexcoords.data() + idxFace * 3;
+						for (int v = 0; v < 3; ++v)
+							texcoords[v] += offset;
+					}
+					patchBig.faces.JoinRemove(patchSmall.faces);
+					patchSmall.label = NO_ID;
+				}
+			}
+		}
+		for (int i = (int)texturePatches.size() - 2; i >= 0; --i) {
+			if (texturePatches[i].label == NO_ID) {
+				texturePatches.RemoveAtMove(i);
+			}
+		}
+	}
+	/*
 	for (unsigned i=0; i<texturePatches.size()-1; ++i) {
 		TexturePatch& texturePatchBig = texturePatches[i];
 		for (unsigned j=1; j<texturePatches.size(); ++j) {
@@ -2080,6 +2122,7 @@ void MeshTexture::GenerateTexture(bool bGlobalSeamLeveling, bool bLocalSeamLevel
 			texturePatches.RemoveAtMove(j--);
 		}
 	}
+	*/
 
 	// create texture
 	{
@@ -2125,7 +2168,7 @@ void MeshTexture::GenerateTexture(bool bGlobalSeamLeveling, bool bLocalSeamLevel
 				default:
 					ABORT("error: unknown RectsBinPack type");
 				}
-				DEBUG_ULTIMATE("\tpacking texture completed: %u initial patches, %u placed patches, %u texture-size, %u textures (%s)", texturePatches.size(), newPlacedRects.size(), textureSize, placedRects.size(), TD_TIMER_GET_FMT().c_str());
+				DEBUG_EXTRA("\tpacking texture completed: %u initial patches, %u placed patches, %u texture-size, %u textures (%s)", texturePatches.size(), newPlacedRects.size(), textureSize, placedRects.size(), TD_TIMER_GET_FMT().c_str());
 
 				if (textureSize == maxTextureSize || unplacedRects.empty()) {
 					// create texture image
