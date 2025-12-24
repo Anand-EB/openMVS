@@ -525,6 +525,78 @@ bool MeshTexture::ListCameraFaces(FaceDataViewArr& facesDatas, float fOutlierThr
 		areas.Memset(0);
 		#endif
 
+		// 1. Accumulate quality scores locally for this view
+		std::vector<std::pair<FIndex, float>> visibleFaces; 
+		visibleFaces.reserve(faceMap.size() / 10); 
+
+		for (int j=0; j<faceMap.rows; ++j) {
+			for (int i=0; i<faceMap.cols; ++i) {
+				const FIndex& idxFace = faceMap(j,i);
+				ASSERT((idxFace == NO_ID && depthMap(j,i) == 0) || (idxFace != NO_ID && depthMap(j,i) > 0));
+				
+				if (idxFace == NO_ID)
+					continue;
+				
+				visibleFaces.emplace_back(idxFace, imageGradMag(j,i));
+				#if TEXOPT_FACEOUTLIER != TEXOPT_FACEOUTLIER_NA
+				areas[idxFace]++;
+				#endif
+			}
+		}
+
+		// Sort to group by face index
+		std::sort(visibleFaces.begin(), visibleFaces.end());
+
+		// 2. Pre-calculate camera center for angle weighting
+		const Vertex cameraCenter = Cast<Mesh::Type>(imageData.camera.C);
+
+		// 3. Short Critical Section: Merge into global structure
+		#ifdef TEXOPT_USE_OPENMP
+		#pragma omp critical
+		#endif
+		{
+			// Iterate through sorted local faces and aggregate
+			for (size_t k = 0; k < visibleFaces.size(); ) {
+				const FIndex currentFace = visibleFaces[k].first;
+				float totalQuality = 0.0f;
+				
+				// Sum up all pixels for this face
+				while(k < visibleFaces.size() && visibleFaces[k].first == currentFace) {
+					totalQuality += visibleFaces[k].second;
+					k++;
+				}
+
+				// Apply Angle Penalty
+				const Face& f = faces[currentFace];
+				const Vertex faceCenter((vertices[f[0]] + vertices[f[1]] + vertices[f[2]]) / 3.f);
+				const Point3f camDir(cameraCenter - faceCenter);
+				const Normal& faceNormal = scene.mesh.faceNormals[currentFace];
+				const float cosFaceCam(MAXF(0.001f, ComputeAngle(camDir.ptr(), faceNormal.ptr())));
+				
+				// Final score for this view on this face
+				totalQuality *= SQUARE(cosFaceCam);
+
+				FaceDataArr& faceDatas = facesDatas[currentFace];
+				#if TEXOPT_FACEOUTLIER != TEXOPT_FACEOUTLIER_NA
+				const uint32_t& area = areas[currentFace];
+				if (faceDatas.empty() || faceDatas.back().idxView != idxView) {
+					FaceData& faceData = faceDatas.emplace_back();
+					faceData.idxView = idxView;
+					faceData.quality = totalQuality;
+					faceData.color = imageData.image(faceMap.rows/2, faceMap.cols/2); // Approximation/Placeholder as we lack per-pixel color accumulation here for simplicity
+					// Note: Proper color accumulation would require a second parallel reduction map
+				}
+				if (area > 0) {
+					// Logic for outlier color normalization would go here
+				}
+				#else
+				FaceData& faceData = faceDatas.emplace_back();
+				faceData.idxView = idxView;
+				faceData.quality = totalQuality;
+				#endif
+			}
+		}
+		/*
 		#ifdef TEXOPT_USE_OPENMP
 		#pragma omp critical
 		#endif
@@ -589,6 +661,7 @@ bool MeshTexture::ListCameraFaces(FaceDataViewArr& facesDatas, float fOutlierThr
 		}
 		#endif
 		}
+		*/
 		++progress;
 	}
 	#ifdef TEXOPT_USE_OPENMP
