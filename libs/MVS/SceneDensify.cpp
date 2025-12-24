@@ -935,6 +935,9 @@ bool DepthMapsData::AdjustConfidenceFast(DepthData& depthDataRef, const IIndexAr
 	#if TD_VERBOSE != TD_VERBOSE_OFF
 	unsigned nProcessed(0), nDiscarded(0);
 	#endif
+	#ifdef DENSE_USE_OPENMP
+	#pragma omp parallel for reduction(+:nProcessed, nDiscarded)
+	#endif
 	for (int r=0; r<depthDataRef.depthMap.rows; ++r) {
 		for (int c=0; c<depthDataRef.depthMap.cols; ++c) {
 			const Depth& depthRef = depthDataRef.depthMap(r,c);
@@ -1082,6 +1085,9 @@ bool DepthMapsData::AdjustConfidence(DepthData& depthDataRef, const IIndexArr& i
 	#endif
 	// average similar depths, and decrease confidence if depths do not agree
 	// (inspired by: "Real-Time Visibility-Based Fusion of Depth Maps", Merrell, 2007)
+	#ifdef DENSE_USE_OPENMP
+	#pragma omp parallel for reduction(+:nProcessed, nDiscarded)
+	#endif
 	for (int i=0; i<sizeRef.height; ++i) {
 		for (int j=0; j<sizeRef.width; ++j) {
 			const ImageRef xRef(j,i);
