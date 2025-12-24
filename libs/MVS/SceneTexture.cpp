@@ -527,7 +527,7 @@ bool MeshTexture::ListCameraFaces(FaceDataViewArr& facesDatas, float fOutlierThr
 
 		// 1. Accumulate quality scores locally for this view
 		std::vector<std::pair<FIndex, float>> visibleFaces; 
-		visibleFaces.reserve(faceMap.size() / 10); 
+		visibleFaces.reserve(faceMap.total() / 10); 
 
 		for (int j=0; j<faceMap.rows; ++j) {
 			for (int i=0; i<faceMap.cols; ++i) {
