@@ -1799,9 +1799,23 @@ void DepthMapsData::DenseFuseDepthMaps(PointCloud& pointcloud, bool bEstimateCol
 		}
 		// try to fuse each depth estimate
 		const size_t nNumPointsPrev(pointcloud.points.size());
+		UseMask& useMaskRef(arrUseMask[idxImage]);
+		const bool hasConfMap(!depthData.confMap.empty());
 		for (int i=0; i<depthData.size.height; ++i) {
 			for (int j=0; j<depthData.size.width; ++j) {
-				FusePoint(idxImage, ImageRef(j,i), 0);
+				const ImageRef px(j,i);
+				// Original (unconditional) call kept for reference:
+				// FusePoint(idxImage, ImageRef(j,i), 0);
+				// avoid calling FusePoint() for pixels that will immediately early-return
+				// (already fused, invalid depth, or too low confidence)
+				if (useMaskRef(px))
+					continue;
+				const Depth d(depthData.depthMap(px));
+				if (d <= Depth(0))
+					continue;
+				if (hasConfMap && depthData.confMap(px) < minConfidence)
+					continue;
+				FusePoint(idxImage, px, 0);
 				if (fusedPoints[0].size() >= OPTDENSE::nMinPixelsFuse && fusedViews.size() >= nMinViewsFuse) {
 					// create the corresponding 3D point
 					pointcloud.points.emplace_back(
