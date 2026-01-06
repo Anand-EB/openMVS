@@ -37,6 +37,11 @@
 
 using namespace MVS;
 
+namespace MVS {
+// Flag controlled from the densifier CLI to force recomputing view neighbors.
+bool g_bDensifyComputeViews = false;
+}
+
 
 // D E F I N E S ///////////////////////////////////////////////////
 
@@ -145,7 +150,9 @@ bool DepthMapsData::SelectViews(DepthData& depthData)
 	// find and sort valid neighbor views
 	const IIndex idxImage((IIndex)(&depthData-arrDepthData.Begin()));
 	ASSERT(depthData.neighbors.IsEmpty());
-	if (scene.images[idxImage].neighbors.empty() &&
+	if (g_bDensifyComputeViews && !scene.images[idxImage].neighbors.empty())
+		scene.images[idxImage].neighbors.Release();
+	if ((g_bDensifyComputeViews || scene.images[idxImage].neighbors.empty()) &&
 		!scene.SelectNeighborViews(idxImage, depthData.points, OPTDENSE::nMinViews, OPTDENSE::nMinViewsTrustPoint>1?OPTDENSE::nMinViewsTrustPoint:2, FD2R(OPTDENSE::fOptimAngle), OPTDENSE::fWeightPointInsideROI))
 		return false;
 	depthData.neighbors.CopyOf(scene.images[idxImage].neighbors);

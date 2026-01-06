@@ -1420,7 +1420,7 @@ void MVS::EstimatePointColors(const ImageArr& images, PointCloud& pointcloud)
 		}
 	}
 
-	DEBUG_ULTIMATE("Estimate dense point-cloud colors: %u colors (%s)", pointcloud.colors.size(), TD_TIMER_GET_FMT().c_str());
+	DEBUG_EXTRA("Estimate dense point-cloud colors: %u colors (%s)", pointcloud.colors.size(), TD_TIMER_GET_FMT().c_str());
 } // EstimatePointColors
 /*----------------------------------------------------------------*/
 
@@ -1561,7 +1561,7 @@ void MVS::EstimatePointNormals(const ImageArr& images, PointCloud& pointcloud, i
 			normal = -normal;
 	}
 
-	DEBUG_ULTIMATE("Estimate dense point-cloud normals: %u normals (%s)", pointcloud.normals.size(), TD_TIMER_GET_FMT().c_str());
+	DEBUG_EXTRA("Estimate dense point-cloud normals: %u normals (%s)", pointcloud.normals.size(), TD_TIMER_GET_FMT().c_str());
 } // EstimatePointNormals
 /*----------------------------------------------------------------*/
 

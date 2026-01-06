@@ -34,6 +34,7 @@
 #include <boost/program_options.hpp>
 
 using namespace MVS;
+namespace MVS { extern bool g_bDensifyComputeViews; }
 
 
 // D E F I N E S ///////////////////////////////////////////////////
@@ -78,6 +79,7 @@ bool bForceNeighborsFromImages;
 int nArchiveType;
 int nProcessPriority;
 unsigned nMaxThreads;
+bool bComputeViews;
 String strConfigFileName;
 boost::program_options::variables_map vm;
 } // namespace OPT
@@ -180,6 +182,7 @@ bool Application::Initialize(size_t argc, LPCTSTR* argv)
 		("remove-dmaps", boost::program_options::value(&bRemoveDmaps)->default_value(false), "remove depth-maps after fusion")
 		("tower-mode", boost::program_options::value(&OPT::nTowerMode)->default_value(4), "add a cylinder of points in the center of ROI; scene assume to be Z-up oriented (0 - disabled, 1 - replace, 2 - append, 3 - select neighbors, 4 - select neighbors & append, <0 - force tower mode)")
 		("normalize-coordinates", boost::program_options::value(&OPT::nNormalizeCoordinates)->default_value(0), "normalize scene coordinates and output the inverse transform to file (0 - disabled, 1 - center, 2 - center & scale)")
+		("compute-views", boost::program_options::value(&OPT::bComputeViews)->default_value(false), "force recomputation of neighbor views even if already present")
 		;
 
 	// hidden options, allowed both on command line and
@@ -275,6 +278,7 @@ bool Application::Initialize(size_t argc, LPCTSTR* argv)
 	OPTDENSE::nIgnoreMaskLabel = nIgnoreMaskLabel;
 	OPTDENSE::fDepthReprojectionErrorThreshold = fDepthReprojectionErrorThreshold;
 	OPTDENSE::bRemoveDmaps = bRemoveDmaps;
+	g_bDensifyComputeViews = OPT::bComputeViews;
 	if (!bValidConfig && !OPT::strDenseConfigFileName.empty())
 		OPTDENSE::oConfig.Save(OPT::strDenseConfigFileName);
 
