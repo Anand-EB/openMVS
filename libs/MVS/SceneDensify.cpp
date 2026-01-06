@@ -360,7 +360,7 @@ bool DepthMapsData::InitDepthMap(DepthData& depthData)
 	}
 	#endif
 
-	DEBUG_ULTIMATE("Depth-map %3u roughly estimated from %u sparse points: %dx%d (%s)", image.GetID(), depthData.points.size(), image.image.width(), image.image.height(), TD_TIMER_GET_FMT().c_str());
+	DEBUG_EXTRA("Depth-map %3u roughly estimated from %u sparse points: %dx%d (%s)", image.GetID(), depthData.points.size(), image.image.width(), image.image.height(), TD_TIMER_GET_FMT().c_str());
 	return true;
 } // InitDepthMap
 /*----------------------------------------------------------------*/
@@ -1281,7 +1281,7 @@ void DepthMapsData::MergeDepthMaps(PointCloud& pointcloud, bool bEstimateColor, 
 		depthData.DecRef();
 		++nDepthMaps;
 		ASSERT(pointcloud.points.size() == pointcloud.pointViews.size());
-		DEBUG_ULTIMATE("Depth-map for reference image %3u merged using %u depth-maps: %u new points (%s)",
+		DEBUG_EXTRA("Depth-map for reference image %3u merged using %u depth-maps: %u new points (%s)",
 			idxImage, depthData.images.size()-1, pointcloud.points.size()-nNumPointsPrev, TD_TIMER_GET_FMT().c_str());
 		progress.display(idxImage+1);
 	}
@@ -1562,7 +1562,7 @@ void DepthMapsData::FuseDepthMaps(PointCloud& pointcloud, bool bEstimateColor, b
 		}
 		fusedDMaps[idxImage] = true;
 		ASSERT(pointcloud.points.size() == pointcloud.pointViews.size() && pointcloud.points.size() == pointcloud.pointWeights.size() && pointcloud.points.size() == projs.size());
-		DEBUG_ULTIMATE("Depth-map for reference image %3u fused using %u depth-maps: %u new points, %u/%u cached images (%s)",
+		DEBUG_EXTRA("Depth-map for reference image %3u fused using %u depth-maps: %u new points, %u/%u cached images (%s)",
 			idxImage, depthData.images.size()-1, pointcloud.points.size()-nNumPointsPrev, numImageNeighborsInCache, numImagesInCache, TD_TIMER_GET_FMT().c_str());
 		progress.display(numDMapsFused);
 		// ensure enough memory is available for the next depth-maps chunk
@@ -1854,7 +1854,7 @@ void DepthMapsData::DenseFuseDepthMaps(PointCloud& pointcloud, bool bEstimateCol
 		}
 		fusedDMaps[idxImage] = true;
 		ASSERT(pointcloud.points.size() == pointcloud.pointViews.size() && pointcloud.points.size() == pointcloud.pointWeights.size());
-		DEBUG_ULTIMATE("Depth-map for reference image %3u fused using %u depth-maps: %u new points, %u/%u cached images (%s)",
+		DEBUG_EXTRA("Depth-map for reference image %3u fused using %u depth-maps: %u new points, %u/%u cached images (%s)",
 			idxImage, depthData.images.size() - 1, pointcloud.points.size() - nNumPointsPrev, numImageNeighborsInCache, numImagesInCache, TD_TIMER_GET_FMT().c_str());
 		progress.display(numDMapsFused);
 		// ensure enough memory is available for the next depth-maps chunk
@@ -2316,13 +2316,13 @@ void Scene::DenseReconstructionEstimate(void* pData)
 			if (OPTDENSE::nOptimize & (OPTDENSE::REMOVE_SPECKLES)) {
 				TD_TIMER_START();
 				if (data.depthMaps.RemoveSmallSegments(depthData)) {
-					DEBUG_ULTIMATE("Depth-map %3u filtered: remove small segments (%s)", depthData.GetView().GetID(), TD_TIMER_GET_FMT().c_str());
+					DEBUG_EXTRA("Depth-map %3u filtered: remove small segments (%s)", depthData.GetView().GetID(), TD_TIMER_GET_FMT().c_str());
 				}
 			}
 			if (OPTDENSE::nOptimize & (OPTDENSE::FILL_GAPS)) {
 				TD_TIMER_START();
 				if (data.depthMaps.GapInterpolation(depthData)) {
-					DEBUG_ULTIMATE("Depth-map %3u filtered: gap interpolation (%s)", depthData.GetView().GetID(), TD_TIMER_GET_FMT().c_str());
+					DEBUG_EXTRA("Depth-map %3u filtered: gap interpolation (%s)", depthData.GetView().GetID(), TD_TIMER_GET_FMT().c_str());
 				}
 			}
 			// save depth-map
